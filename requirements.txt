@@ -1,0 +1,6 @@
+# Demo app / inference (no TensorFlow needed)
+Flask>=3.0
+numpy>=1.26
+pandas>=2.1
+gunicorn>=22.0
+pytest>=8.0

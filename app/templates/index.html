@@ -1,0 +1,35 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CNN Intrusion Detection</title><style>
+body{margin:0;font-family:system-ui,sans-serif;background:#0b1020;color:#e6e9f2}main{max-width:1100px;margin:0 auto;padding:20px 16px}
+.card{background:#141a2e;border:1px solid #232b45;border-radius:12px;padding:18px;margin-bottom:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}.muted{color:#8f97b3;font-size:13px}
+button{background:#4f7cff;color:#fff;border:0;border-radius:8px;padding:9px 16px;cursor:pointer;font:inherit}button.alt{background:transparent;border:1px solid #4f7cff;color:#9db4ff}
+table{border-collapse:collapse;width:100%;font-size:13px}td,th{border-bottom:1px solid #232b45;padding:6px;text-align:left}
+.big{font-size:30px;font-weight:700}.bar{height:10px;background:#ff5d6c;border-radius:5px}.bar.benign{background:#3ccf91}
+.err{color:#ff8a8a}img{max-width:100%;border-radius:8px;background:#fff}a{color:#9db4ff}
+</style></head><body><main>
+<h1>Network Intrusion Detection with a 1-D CNN</h1>
+<p class="muted">Classifies network flows (CICIDS2017 feature format) into BENIGN or one of 14 attack classes. Inference runs in pure NumPy using weights exported from the TensorFlow model.</p>
+<div class="grid">
+<form class="card" method="post" enctype="multipart/form-data"><b>Upload flow CSV</b><p class="muted">CICFlowMeter / CICIDS2017 MachineLearningCSV columns. A <code>Label</code> column is optional (enables accuracy).</p>
+<input type="file" name="file" accept=".csv"><p><button>Analyse</button></p></form>
+<form class="card" method="post"><input type="hidden" name="sample" value="1"><b>No data handy?</b><p class="muted">Run on bundled sample traffic: mostly benign flows mixed with every attack type. <a href="/sample.csv">Download it</a>.</p><button class="alt">Analyse sample traffic</button></form>
+<div class="card"><b>Model</b><p class="muted">Trained on: {{ metrics.source }} · test accuracy {{ metrics.test_accuracy }} · macro F1 {{ metrics.macro_f1 }} · {{ labels|length }} classes</p>
+<p class="muted">Conv1D(32) → MaxPool → Conv1D(64) → MaxPool → Dense(128) → Softmax</p></div>
+</div>
+{% if error %}<p class="err">{{ error }}</p>{% endif %}
+{% if result %}
+<div class="grid">
+<div class="card"><div class="muted">Flows analysed</div><div class="big">{{ result.rows }}</div>{% if result.dropped_rows %}<div class="muted">{{ result.dropped_rows }} rows dropped (NaN/inf)</div>{% endif %}</div>
+<div class="card"><div class="muted">Flagged as attacks</div><div class="big">{{ result.attack_rows }}</div></div>
+{% if result.accuracy_vs_labels is not none %}<div class="card"><div class="muted">Accuracy vs provided labels</div><div class="big">{{ (result.accuracy_vs_labels*100)|round(1) }}%</div></div>{% endif %}
+</div>
+<div class="card"><h3>Traffic breakdown</h3><table>
+{% for k, v in result.counts.items() %}<tr><td style="width:220px">{{ k }}</td><td>{{ v }}</td><td style="width:60%"><div class="bar {{ 'benign' if k=='BENIGN' }}" style="width:{{ (100*v/result.rows)|round(1) }}%"></div></td></tr>{% endfor %}
+</table></div>
+<div class="card"><h3>Alerts (top {{ result.alerts|length }} by confidence)</h3><table>
+<tr>{% for c in (result.alerts[0].keys() if result.alerts else []) %}<th>{{ c }}</th>{% endfor %}</tr>
+{% for r in result.alerts %}<tr>{% for v in r.values() %}<td>{{ v }}</td>{% endfor %}</tr>{% else %}<tr><td>No attacks detected</td></tr>{% endfor %}</table></div>
+{% endif %}
+<div class="card"><h3>Confusion matrix (held-out test set)</h3><img src="/artifacts/confusion_matrix.png" alt="Confusion matrix"></div>
+</main></body></html>
