@@ -63,3 +63,7 @@ ids/infer.py       NumPy inference engine
 app/               Flask demo (upload CSV, sample traffic, JSON API)
 artifacts/         trained demo model + metrics
 ```
+
+## Author and contributors
+
+- **Sandeep Kashyap** ([@sktut](https://github.com/sktut)), author and maintainer
